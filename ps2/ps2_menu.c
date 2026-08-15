@@ -111,7 +111,7 @@ int PS2_SelectMenu(const char *title, char **items, int count)
             if (pressed & PAD_UP)
                 sel = (sel - 1 + count) % count;
             if (pressed & PAD_DOWN)
-                sel = (sel + 1) % count;
+                sel = (sel + 1 + count) % count; // or standard wrap
             if (pressed & (PAD_CROSS | PAD_START))
                 break;
         }
