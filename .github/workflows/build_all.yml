@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Run the build inside the ps2dev image for all engines (SDL and gsKit variants).
+      # Run the build inside the ps2dev image for all engines (SDL and gsKit variants)
       - name: Build PS2 ELFs (SDL + gsKit video)
         run: |
           docker run --rm -v "$PWD:/work" -w /work \
