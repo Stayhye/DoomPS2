@@ -7,9 +7,9 @@ name: PS2 build
 on:
   push:
     branches: [ master, ps2-port ]
-    paths: [ 'src/**', 'Dockerfile', '.github/workflows/ps2.yml' ]
+    paths: [ 'ps2/**', 'Dockerfile', '.github/workflows/ps2.yml' ]
   pull_request:
-    paths: [ 'src/**' ]
+    paths: [ 'ps2/**' ]
   workflow_dispatch:
 
 jobs:
@@ -18,16 +18,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Run the build inside the ps2dev image for all engines (SDL and gsKit variants)
+      # Run the build inside the ps2dev image for all engines (SDL and gsKit variants) inside the ps2 directory.
       - name: Build PS2 ELFs (SDL + gsKit video)
         run: |
-          docker run --rm -v "$PWD:/work" -w /work \
+          docker run --rm -v "$PWD:/work" -w /work/ps2 \
             ghcr.io/ps2dev/ps2dev:latest \
             sh -c '
               set -e
               apk add --no-cache make bash >/dev/null
               
-              # Build all variants using the Makefile in the root/working directory
+              # Build all variants using the Makefile in ps2/
               make
             '
 
@@ -36,12 +36,12 @@ jobs:
         with:
           name: ps2-all-elfs
           path: |
-            src/doomsdl.elf
-            src/doomgs.elf
-            src/hereticsdl.elf
-            src/hereticgs.elf
-            src/hexensdl.elf
-            src/hexengs.elf
-            src/strifesdl.elf
-            src/strifegs.elf
+            ps2/doomsdl.elf
+            ps2/doomgs.elf
+            ps2/hereticsdl.elf
+            ps2/hereticgs.elf
+            ps2/hexensdl.elf
+            ps2/hexengs.elf
+            ps2/strifesdl.elf
+            ps2/strifegs.elf
           if-no-files-found: error
