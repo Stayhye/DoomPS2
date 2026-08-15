@@ -1407,8 +1407,7 @@ void D_DoomMain (void)
 
     // Find main IWAD file and load it.
 #ifdef __PS2__
-    // PS2 port: pick the IWAD from hostfs (controller menu if several are
-    // present next to the ELF) or fall back to the embedded shareware WAD.
+    // PS2 port: pick the IWAD from available media, or fall back to the embedded shareware WAD.
     // See ps2/ps2_iwad.c.
     {
         extern char *PS2_GetIWAD(void);
@@ -1916,4 +1915,3 @@ void D_DoomMain (void)
 
     D_DoomLoop ();
 }
-
