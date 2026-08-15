@@ -266,9 +266,9 @@ spusynth.irx: iop/spusynth/spusynth.irx
 spusynth_irx.c: spusynth.irx
 	$(BIN2C) $<$@ spusynth_irx
 
-$(EE_BIN):$(EE_OBJS)
+$(EE_BIN): $(EE_OBJS)
 	@echo [Linking $@]
-	$(VB)$(EE_LD) $(EE_CFLAGS)$(EE_INCS) $(EE_LDFLAGS)$(EE_OBJS) \
+	$(VB)$(EE_LD) $(EE_CFLAGS) $(EE_INCS) $(EE_LDFLAGS) $(EE_OBJS) \
 		-o $(EE_BIN) $(EE_LIBS) -Wl,-Map,$(EE_BIN).map
 
 $(EE_OBJS): \vert{}$(EE_OBJDIR)
