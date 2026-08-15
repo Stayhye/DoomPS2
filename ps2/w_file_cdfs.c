@@ -9,6 +9,7 @@
 #define NEWLIB_PORT_AWARE       // we deliberately use fio for the cdfs (ioman) device
 
 #include <stdlib.h>
+#include <stdio.h>              // snprintf
 #include <fileio.h>             // fioOpen/fioClose/fioRead/fioLseek, FIO_O_RDONLY, SEEK_*
 
 #include "doomtype.h"
@@ -25,19 +26,61 @@ typedef struct
 // 1 if the cdfs file can be opened, else 0. (fopen would fail: O_RDONLY == 0.)
 int PS2Cdfs_Exists(const char *path)
 {
-    int fd = fioOpen((char *) path, FIO_O_RDONLY);
-    if (fd < 0)
-        return 0;
-    fioClose(fd);
-    return 1;
+    char fullpath[256];
+
+    // Check if path already has a prefix, otherwise try iwad then pwad folders
+    if (path[0] == 'c' || path[0] == '/')
+    {
+        int fd = fioOpen((char *) path, FIO_O_RDONLY);
+        if (fd < 0)
+            return 0;
+        fioClose(fd);
+        return 1;
+    }
+
+    snprintf(fullpath, sizeof(fullpath), "cdfs:/iwad/%s", path);
+    int fd = fioOpen(fullpath, FIO_O_RDONLY);
+    if (fd >= 0)
+    {
+        fioClose(fd);
+        return 1;
+    }
+
+    snprintf(fullpath, sizeof(fullpath), "cdfs:/pwad/%s", path);
+    fd = fioOpen(fullpath, FIO_O_RDONLY);
+    if (fd >= 0)
+    {
+        fioClose(fd);
+        return 1;
+    }
+
+    return 0;
 }
 
 static wad_file_t *CDFS_OpenFile(char *path)
 {
     cdfs_wad_file_t *result;
     int              fd;
+    char             fullpath[256];
 
-    fd = fioOpen(path, FIO_O_RDONLY);
+    // If path is already fully qualified, use it directly
+    if (path[0] == 'c' && path[1] == 'd' && path[2] == 'f' && path[3] == 's')
+    {
+        fd = fioOpen(path, FIO_O_RDONLY);
+    }
+    else
+    {
+        // Try iwad folder first, then fallback to pwad folder
+        snprintf(fullpath, sizeof(fullpath), "cdfs:/iwad/%s", path);
+        fd = fioOpen(fullpath, FIO_O_RDONLY);
+        
+        if (fd < 0)
+        {
+            snprintf(fullpath, sizeof(fullpath), "cdfs:/pwad/%s", path);
+            fd = fioOpen(fullpath, FIO_O_RDONLY);
+        }
+    }
+
     if (fd < 0)
         return NULL;
 
