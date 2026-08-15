@@ -151,8 +151,7 @@ CORE_OBJS = dummy.o am_map.o doomdef.o doomstat.o dstrings.o d_event.o d_items.o
 	p_saveg.o p_setup.o p_sight.o p_spec.o p_switch.o p_telept.o p_tick.o p_user.o r_bsp.o r_data.o r_draw.o r_main.o \
 	r_plane.o r_segs.o r_sky.o r_things.o sha1.o sounds.o statdump.o st_lib.o st_stuff.o s_sound.o tables.o v_video.o \
 	w_checksum.o w_main.o w_wad.o z_zone.o w_file_stdc.o i_input.o i_video.o doomgeneric.o \
-	wi_stuff.o gusconf.o mus2mid.o \
-	deh_main.o deh_io.o deh_text.o deh_sound.o deh_misc.o deh_mapping.o deh_tables.o
+	wi_stuff.o gusconf.o mus2mid.o
 
 # --- PS2-specific objects (compiled from ./) ------------------------------
 PS2_OBJS = $(VIDEO_OBJ) w_file_ps2.o w_file_cdfs.o ps2_iwad.o ps2_cdfs.o \
