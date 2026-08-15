@@ -1,0 +1,47 @@
+name: PS2 build
+
+# Builds the PlayStation 2 ports in the official ps2dev toolchain and uploads
+# the ELFs. No WAD is embedded, so the artifacts contain no game data and are
+# safe to publish; supply a WAD at runtime.
+
+on:
+  push:
+    branches: [ master, ps2-port ]
+    paths: [ 'src/**', 'Dockerfile', '.github/workflows/ps2.yml' ]
+  pull_request:
+    paths: [ 'src/**' ]
+  workflow_dispatch:
+
+jobs:
+  ps2-elf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Run the build inside the ps2dev image for all engines (SDL and gsKit variants).
+      - name: Build PS2 ELFs (SDL + gsKit video)
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work/src \
+            ghcr.io/ps2dev/ps2dev:latest \
+            sh -c '
+              set -e
+              apk add --no-cache make bash >/dev/null
+              
+              # Build all variants using the updated root Makefile
+              make
+            '
+
+      - name: Upload ELFs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ps2-all-elfs
+          path: |
+            src/doomsdl.elf
+            src/doomgs.elf
+            src/hereticsdl.elf
+            src/hereticgs.elf
+            src/hexensdl.elf
+            src/hexengs.elf
+            src/strifesdl.elf
+            src/strifegs.elf
+          if-no-files-found: error
