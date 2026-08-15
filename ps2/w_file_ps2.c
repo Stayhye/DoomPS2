@@ -60,7 +60,6 @@ static wad_file_class_t *wad_file_classes[] =
 };
 
 extern wad_file_class_t cdfs_wad_file;   // disc (ISO9660) fio backend, w_file_cdfs.c
-extern wad_file_class_t usb_wad_file;    // USB mass storage fileXio backend, w_file_usb.c
 
 wad_file_t *W_OpenFile(char *path)
 {
@@ -72,13 +71,6 @@ wad_file_t *W_OpenFile(char *path)
     if (path != NULL && !strncmp(path, "cdfs:", 5))
     {
         return cdfs_wad_file.OpenFile(path);
-    }
-
-    // USB mass storage (BDM, "mass:"/"mass0:"): newlib fopen/POSIX open don't reach
-    // this iomanX device on real hardware -- served by the fileXio backend.
-    if (path != NULL && !strncmp(path, "mass", 4))
-    {
-        return usb_wad_file.OpenFile(path);
     }
 
 #ifdef EMBED_WAD
@@ -126,4 +118,3 @@ size_t W_Read(wad_file_t *wad, unsigned int offset,
 {
     return wad->file_class->Read(wad, offset, buffer, buffer_len);
 }
-
