@@ -58,7 +58,7 @@ static const char *g_renderer_elf[3] = {
 static int g_music_engine = 0;
 int PS2_MusicEngine(void) { return g_music_engine; }
 
-// GS output mode chosen at the setup menu: 0 = interlaced (480i/NTSC, any TV),
+// GS output mode chosen at the startup menu: 0 = interlaced (480i/NTSC, any TV),
 // 1 = progressive 480p (sharp, no flicker; needs component/YPbPr on real
 // hardware, works directly in PCSX2). Honored by the gsKit backend at GS init
 // (doomgeneric_ps2_gs.c). Default follows the build flag so a GS480P build still
@@ -205,6 +205,7 @@ char *PS2_GetIWAD(void)
         static char  *shut[] = { "Power off PS2" };
         ps2_setting_t settings[7] = {0};
         char         *wad;
+        int           default_iwad_idx = 0;
 
         if (n == 0)
         {
@@ -213,7 +214,21 @@ char *PS2_GetIWAD(void)
             for (;;) { }
         }
 
-        settings[0].label = "IWAD";   settings[0].values = labels;    settings[0].count = n;   settings[0].cur = 0;
+        // Automatically default selection to match the target game build if available
+        for (i = 0; i < n; ++i)
+        {
+#ifdef HERETIC
+            if (strstr(paths[i], "HERETIC.WAD") != NULL) { default_iwad_idx = i; break; }
+#elif defined(HEXEN)
+            if (strstr(paths[i], "HEXEN.WAD") != NULL) { default_iwad_idx = i; break; }
+#elif defined(STRIFE)
+            if (strstr(paths[i], "STRIFE") != NULL) { default_iwad_idx = i; break; }
+#else
+            if (strstr(paths[i], "DOOM.WAD") != NULL || strstr(paths[i], "DOOM2.WAD") != NULL) { default_iwad_idx = i; break; }
+#endif
+        }
+
+        settings[0].label = "IWAD";   settings[0].values = labels;    settings[0].count = n;   settings[0].cur = default_iwad_idx;
         settings[1].label = "PWAD";   settings[1].values = pw_labels; settings[1].count = pwn; settings[1].cur = 0;
         settings[2].label = "Music";  settings[2].values = eng;       settings[2].count = 2;   settings[2].cur = g_music_engine;
         settings[3].label = "Render"; settings[3].values = rend;      settings[3].count = 3;   settings[3].cur = 1;
