@@ -234,9 +234,8 @@ void PS2_ReturnToLauncher(void)
 // one list; the user picks from whatever is actually present. PWADs are a
 // separate list (below) -- this row stays IWAD-only.
 static char *cd_iwads[] = {
-    "cdfs:/IWADS/DOOM.WAD", "cdfs:/IWADS/DOOM2.WAD", "cdfs:/IWADS/DOOM1.WAD",
-    "cdfs:/IWADS/PLUTONIA.WAD", "cdfs:/IWADS/TNT.WAD",
-    "cdfs:/IWADS/FREEDOOM1.WAD", "cdfs:/IWADS/FREEDOOM2.WAD", "cdfs:/IWADS/FREEDM.WAD", NULL
+    "cdfs:/IWADS/DOOM.WAD", "cdfs:/IWADS/DOOM2.WAD", "cdfs:/IWADS/PLUTONIA.WAD", 
+	"cdfs:/IWADS/TNT.WAD", "cdfs:/IWADS/HERETIC.WAD", "cdfs:/IWADS/HEXEN.WAD", "cdfs:/IWADS/FALLOUT.WAD", NULL
 };
 static char *host_iwads[] = {
     "host:DOOM.WAD", "host:DOOM2.WAD", "host:DOOM1.WAD",
@@ -253,9 +252,9 @@ static char *host_iwads[] = {
 // names are UPPERCASE (the ISO graft uppercases them); host names keep the
 // on-disk case. SIGIL_COMPAT first, as requested.
 static char *cd_pwads[] = {
-    "cdfs:/SIGIL_COMPAT.WAD", "cdfs:/SIGIL.WAD", "cdfs:/SIGIL_SHREDS.WAD",
-    "cdfs:/NERVE.WAD", "cdfs:/SCYTHE.WAD", "cdfs:/THATCHER.WAD",
-    "cdfs:/NUTS.WAD", "cdfs:/NUTS2.WAD", "cdfs:/NUTS3.WAD", NULL
+    "cdfs:/PWADS/BETRAY.WAD", "cdfs:/PWADS/SEWERS.WAD", "cdfs:/PWADS/SIGIL.WAD",
+    "cdfs:/PWADS/TNT31.WAD", "cdfs:/PWADS/SCYTHE.WAD", "cdfs:/PWADS/THATCHER.WAD",
+    "cdfs:/PWADS/NUTS.WAD", "cdfs:/PWADS/NUTS2.WAD", "cdfs:/PWADS/NUTS3.WAD", NULL
 };
 static char *host_pwads[] = {
     "host:SIGIL_COMPAT.wad", "host:SIGIL.wad", "host:SIGIL_SHREDS.wad",
