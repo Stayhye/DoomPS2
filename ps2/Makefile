@@ -70,7 +70,7 @@ endif
 endif
 
 # Copyright: by default NO WAD is embedded, so the ELF contains no game data
-# and a WAD must be supplied at runtime via hostfs (drop it next to the ELF).
+# and a WAD must be supplied at runtime via cdfs (drop it next to the ELF).
 # `make EMBED_WAD=1` additionally bakes in DOOM1.WAD (shareware, which id
 # Software permits redistributing) as a built-in fallback -- for personal
 # convenience. Never embed a commercial WAD you intend to distribute.
@@ -80,7 +80,7 @@ endif
 
 # BOOT_STRAIGHT=1 (with EMBED_WAD): a single-file ELF that skips the setup menu
 # and boots straight into the embedded WAD -- the known-good DOOMGS.ELF path,
-# for quick FMCB/USB testing. Running the menu + gsKit in one ELF garbles the GS.
+# for quick FMCB testing. Running the menu + gsKit in one ELF garbles the GS.
 ifdef BOOT_STRAIGHT
 EE_CFLAGS += -DBOOT_STRAIGHT
 endif
@@ -154,7 +154,7 @@ CORE_OBJS = dummy.o am_map.o doomdef.o doomstat.o dstrings.o d_event.o d_items.o
 	wi_stuff.o gusconf.o mus2mid.o
 
 # --- PS2-specific objects (compiled from ./) ------------------------------
-PS2_OBJS = $(VIDEO_OBJ) w_file_ps2.o w_file_cdfs.o w_file_usb.o ps2_iwad.o ps2_cdfs.o \
+PS2_OBJS = $(VIDEO_OBJ) w_file_ps2.o w_file_cdfs.o ps2_iwad.o ps2_cdfs.o \
 	ps2_bootscr.o ps2_audio.o ps2_audio_driver.o ps2_drivers_stub.o ps2_menu.o ps2_pad.o ps2_mcsave.o \
 	i_audsrvsound.o audsrv_irx.o libsd_irx.o poweroff_irx.o \
 	i_oplmusic.o midifile.o opl.o dbopl.o opl_queue.o opl_ps2.o \

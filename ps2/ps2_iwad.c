@@ -234,9 +234,9 @@ void PS2_ReturnToLauncher(void)
 // one list; the user picks from whatever is actually present. PWADs are a
 // separate list (below) -- this row stays IWAD-only.
 static char *cd_iwads[] = {
-    "cdfs:/DOOM.WAD", "cdfs:/DOOM2.WAD", "cdfs:/DOOM1.WAD",
-    "cdfs:/PLUTONIA.WAD", "cdfs:/TNT.WAD",
-    "cdfs:/FREEDOOM1.WAD", "cdfs:/FREEDOOM2.WAD", "cdfs:/FREEDM.WAD", NULL
+    "cdfs:/IWADS/DOOM.WAD", "cdfs:/IWADS/DOOM2.WAD", "cdfs:/IWADS/DOOM1.WAD",
+    "cdfs:/IWADS/PLUTONIA.WAD", "cdfs:/IWADS/TNT.WAD",
+    "cdfs:/IWADS/FREEDOOM1.WAD", "cdfs:/IWADS/FREEDOOM2.WAD", "cdfs:/IWADS/FREEDM.WAD", NULL
 };
 static char *host_iwads[] = {
     "host:DOOM.WAD", "host:DOOM2.WAD", "host:DOOM1.WAD",
