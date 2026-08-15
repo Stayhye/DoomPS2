@@ -58,9 +58,16 @@ endif
 
 EE_CFLAGS = -D_EE -O2 -G0 -Wall -DHAVE_CONFIG_H -D__PS2__ -DFEATURE_SOUND \
             -DDOOMGENERIC_RESX=$(RESX) -DDOOMGENERIC_RESY=$(RESY) \
-            -DSCREENWIDTH=$(RESX) -DSCREENHEIGHT=$(RESY)$(EE_CFLAGS_HIRES) \
+            -DSCREENWIDTH=$(RESX) -DSCREENHEIGHT=$(RESY) $(EE_CFLAGS_HIRES) \
             -DDEFAULT_RAM=$(DG_ZONE_MB) -DMIN_RAM=8 \
             -fdata-sections -ffunction-sections
+
+# SDL2 video variant uses libSDL2main, which requires SDL_main as the entry point
+ifndef GSKIT_VIDEO
+ifndef GL_VIDEO
+EE_CFLAGS += -Dmain=SDL_main
+endif
+endif
 
 # Copyright: by default NO WAD is embedded, so the ELF contains no game data
 # and a WAD must be supplied at runtime via hostfs (drop it next to the ELF).
