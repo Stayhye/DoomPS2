@@ -118,8 +118,8 @@ static char *cd_pwads[] = {
 
 // Candidate DeHackEd patches on cdfs.
 static char *cd_deh[] = {
-    "cdfs:/IWADS/DOOM.DEH", "cdfs:/IWADS/DOOM2.DEH", "cdfs:/IWADS/PLUTONIA.DEH",
-    "cdfs:/IWADS/TNT.DEH", "cdfs:/IWADS/REVERIE.DEH", "cdfs:/DEH/DOOM.DEH", 
+    "cdfs:/IWADS/ALLHELL.DEH", "cdfs:/IWADS/AODDOOM2.DEH", "cdfs:/IWADS/ASTRO.DEH",
+    "cdfs:/IWADS/D64V2.DEH", "cdfs:/IWADS/DOOMZERO.DEH", "cdfs:/DEH/DOOM.DEH", 
     "cdfs:/DEH/DOOM2.DEH", "cdfs:/DEH/PLUTONIA.DEH", "cdfs:/DEH/TNT.DEH", NULL
 };
 
