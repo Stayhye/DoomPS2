@@ -12,12 +12,13 @@
 // GNU General Public License for more details.
 //
 //
-// Dehacked I/O code (does all reads from dehacked files)
+// Dehacked I/O code header
 //
 
 #ifndef DEH_IO_H
 #define DEH_IO_H
 
+#include "doomtype.h"
 #include "deh_defs.h"
 
 deh_context_t *DEH_OpenFile(const char *filename);
@@ -30,4 +31,3 @@ void DEH_Warning(deh_context_t *context, const char *msg, ...) PRINTF_ATTR(2, 3)
 boolean DEH_HadError(deh_context_t *context);
 
 #endif /* #ifndef DEH_IO_H */
-
