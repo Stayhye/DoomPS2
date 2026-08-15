@@ -38,7 +38,7 @@ int PS2Cdfs_Exists(const char *path)
         return 1;
     }
 
-    snprintf(fullpath, sizeof(fullpath), "cdfs:/iwad/%s", path);
+    snprintf(fullpath, sizeof(fullpath), "cdfs:/IWADS/%s", path);
     int fd = fioOpen(fullpath, FIO_O_RDONLY);
     if (fd >= 0)
     {
@@ -46,7 +46,7 @@ int PS2Cdfs_Exists(const char *path)
         return 1;
     }
 
-    snprintf(fullpath, sizeof(fullpath), "cdfs:/pwad/%s", path);
+    snprintf(fullpath, sizeof(fullpath), "cdfs:/PWADS/%s", path);
     fd = fioOpen(fullpath, FIO_O_RDONLY);
     if (fd >= 0)
     {
@@ -71,12 +71,12 @@ static wad_file_t *CDFS_OpenFile(char *path)
     else
     {
         // Try iwad folder first, then fallback to pwad folder
-        snprintf(fullpath, sizeof(fullpath), "cdfs:/iwad/%s", path);
+        snprintf(fullpath, sizeof(fullpath), "cdfs:/IWADS/%s", path);
         fd = fioOpen(fullpath, FIO_O_RDONLY);
         
         if (fd < 0)
         {
-            snprintf(fullpath, sizeof(fullpath), "cdfs:/pwad/%s", path);
+            snprintf(fullpath, sizeof(fullpath), "cdfs:/PWADS/%s", path);
             fd = fioOpen(fullpath, FIO_O_RDONLY);
         }
     }
