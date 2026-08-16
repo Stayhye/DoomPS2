@@ -1,20 +1,22 @@
-/*
- * PS2 DOOM Custom SDL Boot Menu
- * Replaces the libdebug text screen with a stylized, DOOM-themed graphical interface
- * featuring SDL surfaces, smooth input polling, and SDL_mixer audio feedback.
- */
+// Boot-time picker (IWAD, music engine, ...), drawn on the libdebug text screen
+// and driven by the PS2 controller (libpad). Used before SDL takes over the GS.
+//
+// IMPORTANT: the pad is opened *once*, by ps2_pad.c's PS2Pad_Init(), and shared
+// between this menu and in-game input. Opening pad port 0 twice (a menu copy +
+// the game copy) left the port in a non-stable state, so in-game input died and
+// the game was stuck in the attract/demo loop.
+//
+// If a controller never becomes ready within a short budget, it falls back to
+// the first item so it can never hang.
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <tamtypes.h>
-#include <libpad.h>
-
-#include <SDL/SDL.h>
-#include <SDL/SDL_mixer.h>
+#include <debug.h>      // scr_clear, scr_printf, scr_setXY
+#include <libpad.h>     // padGetState, padRead, PAD_*
 
 #include "ps2_menu.h"
 
+// Single shared pad bring-up (ps2_pad.c): SIO2MAN/PADMAN + padInit + padPortOpen.
 extern void PS2Pad_Init(void);
 
 static void busy_wait(volatile int n)
@@ -23,9 +25,11 @@ static void busy_wait(volatile int n)
         __asm__ volatile ("nop");
 }
 
+// Wait (bounded) for the pad port to reach a readable state.
 static int pad_wait_ready(void)
 {
     int tries;
+
     for (tries = 0; tries < 250; tries++)
     {
         int s = padGetState(0, 0);
@@ -36,67 +40,50 @@ static int pad_wait_ready(void)
     return 0;
 }
 
+// Wait (bounded) until the confirm buttons (X / Start) are released before we
+// hand off to the game. Otherwise the press that launched it is still held when
+// the game's first pad poll runs and registers as a phantom keypress (opening
+// the menu / skipping the title). Cap so a stuck pad can't hang the launch.
 static void wait_confirm_released(void)
 {
     struct padButtonStatus btn;
     int tries;
+
     for (tries = 0; tries < 500; tries++)
     {
         if (padRead(0, 0, &btn) != 0
          && (btn.btns & PAD_CROSS) && (btn.btns & PAD_START))
-            return;
+            return;                  // both up (active-low: 1 == released)
         busy_wait(1000000);
     }
 }
 
-static Mix_Chunk *snd_click = NULL;
-static Mix_Chunk *snd_select = NULL;
+// libdebug draws from the very top row, which sits in the TV's top overscan and
+// gets clipped -- and scr_clear resets the origin there. Start a few rows down.
+#define MENU_TOP 4
 
-static void menu_init_audio(void)
+static void draw(const char *title, char **items, int count, int sel)
 {
-    if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 512) < 0)
+    int i;
+    scr_clear();
+    scr_setXY(2, MENU_TOP);
+    scr_printf("%s", title);
+    for (i = 0; i < count; i++)
     {
-        printf("menu warning: Mix_OpenAudio failed: %s\n", Mix_GetError());
-        return;
+        scr_setXY(2, MENU_TOP + 2 + i);
+        scr_printf("%s %s", (i == sel) ? ">" : " ", items[i]);
     }
-
-    // Generate a short click sample procedurally
-    int wav_len = 2205; 
-    Uint8 *wav_buf = (Uint8 *)malloc(wav_len);
-    if (wav_buf)
-    {
-        for (int i = 0; i < wav_len; i++)
-            wav_buf[i] = (i % 20 < 10) ? 120 : 136;
-        snd_click = Mix_QuickLoad_RAW(wav_buf, wav_len);
-    }
-
-    // Generate a higher pitch select sample
-    Uint8 *wav_buf2 = (Uint8 *)malloc(wav_len);
-    if (wav_buf2)
-    {
-        for (int i = 0; i < wav_len; i++)
-            wav_buf2[i] = (i % 10 < 5) ? 180 : 70;
-        snd_select = Mix_QuickLoad_RAW(wav_buf2, wav_len);
-    }
-}
-
-static void menu_free_audio(void)
-{
-    if (snd_click) { Mix_FreeChunk(snd_click); snd_click = NULL; }
-    if (snd_select) { Mix_FreeChunk(snd_select); snd_select = NULL; }
-    Mix_CloseAudio();
+    scr_setXY(2, MENU_TOP + 2 + count + 1);
+    scr_printf("Up/Down: move    Cross/Start: select");
 }
 
 int PS2_SelectMenu(const char *title, char **items, int count)
 {
     struct padButtonStatus btn;
-    int sel = 0;
-    u16 prev = 0xFFFF;
-    SDL_Surface *screen = NULL;
-    SDL_Event event;
-    int running = 1;
+    int sel = 0, last = -1;
+    u16 prev = 0xFFFF;   // active-low: all released
 
-    PS2Pad_Init();
+    PS2Pad_Init();       // shared with in-game input -- do NOT open the pad again
 
     if (!pad_wait_ready())
     {
@@ -104,168 +91,106 @@ int PS2_SelectMenu(const char *title, char **items, int count)
         return 0;
     }
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+    for (;;)
     {
-        printf("menu error: SDL_Init failed: %s\n", SDL_GetError());
-        return 0;
-    }
-
-    screen = SDL_SetVideoMode(640, 480, 16, SDL_SWSURFACE);
-    if (!screen)
-    {
-        printf("menu error: SDL_SetVideoMode failed: %s\n", SDL_GetError());
-        SDL_Quit();
-        return 0;
-    }
-
-    menu_init_audio();
-
-    while (running)
-    {
-        while (SDL_PollEvent(&event))
+        // Redraw only when the selection changed -- a full scr_clear every loop
+        // makes the text flicker badly.
+        if (sel != last)
         {
-            if (event.type == SDL_QUIT)
-                running = 0;
+            draw(title, items, count, sel);
+            last = sel;
         }
 
+        // Read controller (btns are active-low: 0 == pressed).
         if (padRead(0, 0, &btn) != 0)
         {
-            u16 now = btn.btns;
-            u16 pressed = (prev & ~now);
+            u16 now     = btn.btns;
+            u16 pressed = (prev & ~now);   // 1->0 edge: was up, now down
             prev = now;
 
             if (pressed & PAD_UP)
-            {
                 sel = (sel - 1 + count) % count;
-                if (snd_click) Mix_PlayChannel(-1, snd_click, 0);
-            }
             if (pressed & PAD_DOWN)
-            {
-                sel = (sel + 1 + count) % count;
-                if (snd_click) Mix_PlayChannel(-1, snd_click, 0);
-            }
+                sel = (sel + 1 + count) % count; // or standard wrap
             if (pressed & (PAD_CROSS | PAD_START))
-            {
-                if (snd_select) Mix_PlayChannel(-1, snd_select, 0);
-                running = 0;
-            }
+                break;
         }
 
-        // Render graphical DOOM theme background and panels
-        SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 20, 20, 25));
-
-        // Header bar
-        SDL_Rect header_rect = { 40, 40, 560, 50 };
-        SDL_FillRect(screen, &header_rect, SDL_MapRGB(screen->format, 120, 0, 0));
-
-        // Content box
-        SDL_Rect box_rect = { 40, 110, 560, 320 };
-        SDL_FillRect(screen, &box_rect, SDL_MapRGB(screen->format, 40, 40, 45));
-
-        SDL_Flip(screen);
-        SDL_Delay(16);
+        busy_wait(1500000);
     }
 
-    wait_confirm_released();
-    menu_free_audio();
-    SDL_Quit();
+    wait_confirm_released();   // don't let the launch press bleed into the game
+
+    // Clear, but leave the cursor a few rows down so whatever prints next (the
+    // next menu, or Doom's continuing boot log) isn't clipped in the overscan.
+    scr_clear();
+    scr_setXY(0, MENU_TOP);
     return sel;
 }
 
 void PS2_SettingsMenu(const char *title, ps2_setting_t *s, int n)
 {
     struct padButtonStatus btn;
-    int row = 0;
+    int row = 0, dirty = 1, i;
     u16 prev = 0xFFFF;
-    SDL_Surface *screen = NULL;
-    SDL_Event event;
-    int running = 1;
 
-    PS2Pad_Init();
+    PS2Pad_Init();   // shared with in-game input -- do NOT open the pad again
 
     if (!pad_wait_ready())
     {
         printf("menu: no controller; using defaults\n");
-        return;
+        return;      // leave each setting at its default .cur
     }
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
+    for (;;)
     {
-        printf("menu error: SDL_Init failed: %s\n", SDL_GetError());
-        return;
-    }
-
-    screen = SDL_SetVideoMode(640, 480, 16, SDL_SWSURFACE);
-    if (!screen)
-    {
-        SDL_Quit();
-        return;
-    }
-
-    menu_init_audio();
-
-    while (running)
-    {
-        while (SDL_PollEvent(&event))
+        // Redraw only on change (otherwise the text flickers badly).
+        if (dirty)
         {
-            if (event.type == SDL_QUIT)
-                running = 0;
+            scr_clear();
+            scr_setXY(2, MENU_TOP);
+            scr_printf("%s", title);
+            for (i = 0; i < n; i++)
+            {
+                scr_setXY(2, MENU_TOP + 2 + i);
+                scr_printf("%s %-7s  < %s >",
+                           (i == row) ? ">" : " ",
+                           s[i].label, s[i].values[s[i].cur]);
+            }
+            scr_setXY(2, MENU_TOP + 3 + n);
+            scr_printf("Up/Down: row   Left/Right: change   Start/X: play");
+            dirty = 0;
         }
 
         if (padRead(0, 0, &btn) != 0)
         {
-            u16 now = btn.btns;
-            u16 pressed = (prev & ~now);
+            u16 now     = btn.btns;
+            u16 pressed = (prev & ~now);   // 1->0 edge: button went down
             prev = now;
 
-            if (pressed & PAD_UP)
-            {
-                row = (row - 1 + n) % n;
-                if (snd_click) Mix_PlayChannel(-1, snd_click, 0);
-            }
-            if (pressed & PAD_DOWN)
-            {
-                row = (row + 1) % n;
-                if (snd_click) Mix_PlayChannel(-1, snd_click, 0);
-            }
-            if (pressed & PAD_LEFT)
-            {
-                s[row].cur = (s[row].cur - 1 + s[row].count) % s[row].count;
-                if (snd_click) Mix_PlayChannel(-1, snd_click, 0);
-            }
-            if (pressed & PAD_RIGHT)
-            {
-                s[row].cur = (s[row].cur + 1 + s[row].count) % s[row].count;
-                if (snd_click) Mix_PlayChannel(-1, snd_click, 0);
-            }
+            if (pressed & PAD_UP)    { row = (row - 1 + n) % n; dirty = 1; }
+            if (pressed & PAD_DOWN)  { row = (row + 1) % n;     dirty = 1; }
+            if (pressed & PAD_LEFT)  { s[row].cur = (s[row].cur - 1 + s[row].count) % s[row].count; dirty = 1; }
+            if (pressed & PAD_RIGHT) { s[row].cur = (s[row].cur + 1) % s[row].count; dirty = 1; }
             if (pressed & (PAD_CROSS | PAD_START))
             {
+                // An action row (e.g. Shutdown) runs its callback and stays in
+                // the menu; a normal row confirms the whole setup.
                 if (s[row].action)
                 {
-                    if (snd_select) Mix_PlayChannel(-1, snd_select, 0);
-                    s[row].action();
+                    s[row].action();   // may not return (shutdown)
+                    dirty = 1;
                 }
                 else
-                {
-                    if (snd_select) Mix_PlayChannel(-1, snd_select, 0);
-                    running = 0;
-                }
+                    break;
             }
         }
 
-        SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 20, 20, 25));
-
-        SDL_Rect header_rect = { 40, 40, 560, 50 };
-        SDL_FillRect(screen, &header_rect, SDL_MapRGB(screen->format, 120, 0, 0));
-
-        SDL_Rect box_rect = { 40, 110, 560, 320 };
-        SDL_FillRect(screen, &box_rect, SDL_MapRGB(screen->format, 40, 40, 45));
-
-        SDL_Flip(screen);
-        SDL_Delay(16);
+        busy_wait(1500000);
     }
 
-    wait_confirm_released();
-    menu_free_audio();
-    SDL_Quit();
+    wait_confirm_released();   // don't let the launch press bleed into the game
+
+    scr_clear();
+    scr_setXY(0, MENU_TOP);
 }
