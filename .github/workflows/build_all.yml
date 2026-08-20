@@ -1,9 +1,5 @@
 name: PS2 build
 
-# Builds the PlayStation 2 ports using build.sh and uploads
-# the ELFs. No WAD is embedded, so the artifacts contain no game data and are
-# safe to publish; supply a WAD at runtime.
-
 on:
   push:
     branches: [ master, ps2-port ]
@@ -18,23 +14,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Make build.sh executable
       - name: Make build script executable
         run: chmod +x build.sh
 
-      # Run the build using build.sh (which builds ps2dock:local and compiles artifacts)
+      # Build using a preset (e.g., 'stable' for gsKit video, or just run whatever target fits)
       - name: Build PS2 ELFs via build.sh
-        run: |
-          ./build.sh
-          # If you want to build specific variants/all variants, call them here, e.g.:
-          # ./build.sh stable
-          # ./build.sh gl
+        run: ./build.sh stable
 
       - name: Upload ELFs
         uses: actions/upload-artifact@v4
         with:
-          name: ps2-all-elfs
+          name: ps2-elf-artifact
           path: |
             bin/ps2oom.elf
-            bin/*.ELF
           if-no-files-found: error
