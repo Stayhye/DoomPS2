@@ -38,10 +38,4 @@ jobs:
           path: |
             ps2/doomsdl.elf
             ps2/doomgs.elf
-            ps2/hereticsdl.elf
-            ps2/hereticgs.elf
-            ps2/hexensdl.elf
-            ps2/hexengs.elf
-            ps2/strifesdl.elf
-            ps2/strifegs.elf
           if-no-files-found: error
