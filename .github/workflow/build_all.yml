@@ -7,7 +7,7 @@ name: PS2 build
 on:
   push:
     branches: [ master, ps2-port ]
-    paths: [ 'ps2/**', 'Dockerfile', '.github/workflows/ps2.yml' ]
+    paths: [ 'ps2/**', 'Dockerfile', '.github/workflows/ps2.yml' ] 
   pull_request:
     paths: [ 'ps2/**' ]
   workflow_dispatch:
