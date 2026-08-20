@@ -19,7 +19,7 @@ jobs:
 
       # Build using a preset (e.g., 'stable' for gsKit video, or just run whatever target fits)
       - name: Build PS2 ELFs via build.sh
-        run: ./build.sh stable
+        run: ./build.sh stable EMBED_WAD=0
 
       - name: Upload ELFs
         uses: actions/upload-artifact@v4
